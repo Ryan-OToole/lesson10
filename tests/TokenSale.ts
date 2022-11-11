@@ -1,8 +1,10 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { TokenSale, MyERC20, MyERC20__factory, MyERC721__factory, TokenSale__factory } from "../typechain-types";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumber } from "ethers";
 
-const TEST_RATIO = 1;
+const TEST_RATIO = 5;
 
 describe("NFT Shop", async () => {
   let accounts: SignerWithAddress[];
@@ -47,18 +49,26 @@ describe("NFT Shop", async () => {
   });
 
   describe("When a user purchase an ERC20 from the Token contract", async () => {
+    let buyValue: BigNumber;
+    let ethBalanceBefore: BigNumber;
+    let ethBalanceAfter: BigNumber;
+
     beforeEach(async () => {
-      const buyValue = ethers.utils.parseEther("1");
+      buyValue = ethers.utils.parseEther("1");
+      ethBalanceBefore = await accounts[1].getBalance();
       const tx = await tokenSaleContract.connect(accounts[1]).buyTokens({value: buyValue});
       await tx.wait();
     });
 
     it("charges the correct amount of ETH", async () => {
-      throw new Error("Not implemented");
+      ethBalanceAfter = await accounts[1].getBalance();
+      const diff = ethBalanceBefore.sub(ethBalanceAfter);
+      expect(diff).to.eq(buyValue);
     });
 
     it("gives the correct amount of tokens", async () => {
-      throw new Error("Not implemented");
+      const tokenBalance = await paymentTokenContract.balanceOf(accounts[1].address);
+      expect(tokenBalance).to.eq(buyValue.div(TEST_RATIO));
     });
   });
 
