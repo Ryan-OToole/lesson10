@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IMyERC20 is IERC20 {
     function mint(address to, uint256 amount) external;
@@ -14,11 +16,13 @@ interface IMyERC721 {
     function burnFrom(uint256 tokenId) external;
 }
 
-contract TokenSale {
+contract TokenSale is Ownable {
     uint256 public ratio;
     uint256 public price;
     IMyERC20 public paymentToken;
     IMyERC721 public nftContract;
+    uint256 public reservedAmount;
+    uint256 public withdrawableAmount;
 
     constructor(
         uint256 _ratio,
@@ -45,5 +49,11 @@ contract TokenSale {
     function buyNFT(uint256 tokenId) external {
         paymentToken.transferFrom(msg.sender, address(this), price);
         nftContract.safeMint(msg.sender, tokenId);
+        withdrawableAmount += price / 2;
+    }
+
+    function withdraw(uint256 amount) external onlyOwner {
+        withdrawableAmount -= amount;
+        paymentToken.transfer(owner(), amount);
     }
 }
